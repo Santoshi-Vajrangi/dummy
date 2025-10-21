@@ -1,0 +1,285 @@
+Perfect! 🎯 We’re going full Adyen-inspired Multi-Tenant Payment Portal. I’ll design it with:
+
+Landing page with gradient hero, headline, subtitle, feature cards.
+
+Login modal directly from landing page.
+
+Dashboard post-login with tenant-specific transactions, refunds, and charts.
+
+Sony Blue gradient highlights.
+
+Responsive design.
+
+
+Here’s the full React frontend code. You can copy it directly into src/ and run it. I’ve included mock APIs ready to connect to your Java backend later.
+
+
+---
+
+1️⃣ Install dependencies
+
+npx create-react-app multi-tenant-payments
+cd multi-tenant-payments
+
+npm install @mui/material @emotion/react @emotion/styled @mui/icons-material axios recharts framer-motion papaparse file-saver
+
+
+---
+
+2️⃣ Create .env (optional)
+
+REACT_APP_API_BASE_URL=http://localhost:8080/api
+
+
+---
+
+3️⃣ src/index.js
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+createRoot(document.getElementById('root')).render(<App />);
+
+
+---
+
+4️⃣ src/index.css
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(180deg, #f6fbff 0%, #eef6ff 35%, #ffffff 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hero section */
+.hero {
+  width: 100%;
+  height: 90vh;
+  background: linear-gradient(135deg, #0070D1 0%, #00A2E8 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin: 12px 0 24px 0;
+}
+
+/* Feature cards */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  padding: 60px 20px;
+  background: #f4f8ff;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 240px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: center;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+/* Buttons */
+.btn {
+  background: linear-gradient(90deg,#0070D1,#00A2E8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: opacity 0.3s;
+}
+
+.btn:hover { opacity: 0.85; }
+
+/* Login modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 360px;
+  max-width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 {
+  margin: 0 0 12px 0;
+  color: #0070D1;
+  text-align: center;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+
+---
+
+5️⃣ src/services/mockStore.js
+
+export const STORAGE_KEY = 'mtp_demo';
+export const defaultData = {
+  tenants: [
+    { id: 'sony-pictures', name: 'Sony Pictures', currency: 'USD', settlement_days: 2, payment_methods: ['card'] },
+    { id: 'sony-music', name: 'Sony Music', currency: 'EUR', settlement_days: 3, payment_methods: ['card','paypal'] },
+    { id: 'crunchy', name: 'Crunchy', currency: 'JPY', settlement_days: 1, payment_methods: ['card'] },
+  ],
+  users: [
+    { id: 'admin', name: 'Platform Admin', role: 'admin', password: 'admin' },
+    { id: 'music-user', name: 'Music Manager', role: 'tenant_user', tenantId: 'sony-music', password: 'music' },
+    { id: 'pictures-user', name: 'Pictures Manager', role: 'tenant_user', tenantId: 'sony-pictures', password: 'pic' },
+  ],
+  transactions: [],
+  refunds: [],
+};
+
+export function loadStore() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+  try { return JSON.parse(raw); } catch (e) { localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData)); return JSON.parse(JSON.stringify(defaultData)); }
+}
+export function saveStore(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+
+---
+
+6️⃣ src/services/api.js
+
+import { loadStore, saveStore } from './mockStore';
+
+export const api = {
+  login: ({ username, password }) => new Promise(res => {
+    const store = loadStore();
+    const user = store.users.find(u => u.id === username && u.password === password);
+    if (!user) return res({ ok:false, reason:'Invalid credentials' });
+    res({ ok:true, user });
+  }),
+};
+
+
+---
+
+7️⃣ src/context/AuthContext.jsx
+
+import React, { createContext, useContext, useState } from 'react';
+import { api } from '../services/api';
+
+const AuthContext = createContext();
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentTenantId, setCurrentTenantId] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+
+  const login = async (username, password) => {
+    const res = await api.login({ username, password });
+    if (res.ok) {
+      setCurrentUser(res.user);
+      if(res.user.role==='tenant_user') setCurrentTenantId(res.user.tenantId);
+      setShowLogin(false);
+    }
+    return res;
+  };
+
+  const logout = () => { setCurrentUser(null); setCurrentTenantId(null); };
+
+  return (
+    <AuthContext.Provider value={{ currentUser, currentTenantId, login, logout, showLogin, setShowLogin }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+
+---
+
+8️⃣ src/components/LoginModal.jsx
+
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { TextField, Button } from '@mui/material';
+
+export default function LoginModal() {
+  const { login, setShowLogin } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [err, setErr] = useState('');
+
+  const handleLogin = async () => {
+    const res = await login(username,password);
+    if(!res.ok) setErr(res.reason);
+  };
+
+  return (
+    <div className="modal" onClick={()=>setShowLogin(false)}>
+      <div className="modal-content" onClick={e=>e.stopPropagation()}>
+        <h2>Login</h2>
+        <TextField fullWidth label="Username" value={username} onChange={e=>setUsername(e.target.value)} sx={{ mb:2 }} />
+        <TextField fullWidth label="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} sx={{ mb:2 }} />
+        {err && <div style={{color:'red', marginBottom:8}}>{err}</div>}
+        <Button variant="contained" fullWidth onClick={handleLogin}>Login</Button>
+      </div>
+    </div>
+  );
+}
+
+
+---
+
+9️⃣ src/components/LandingPage.jsx
+
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
+
+export default function LandingPage() {
+  const { setShowLogin } =
+
