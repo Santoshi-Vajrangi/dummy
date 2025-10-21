@@ -1,0 +1,897 @@
+Great — I switched the design to Light Mode + Sony-Blue gradient highlights and created a complete, copy-pasteable frontend project for the Multi-Tenant Payment Portal. It includes:
+
+Light theme with Sony Blue gradients and glassy cards
+
+Animated splash screen with a glowing MP logo (auto-transitions to Login after 2.5s)
+
+Tenant name visible in the top bar after login
+
+Refunds, Transactions, Filters, Pagination, CSV export
+
+Recharts analytics (payments trend + refunds pie)
+
+Axios API layer configurable via REACT_APP_API_BASE_URL with mock fallback
+
+Loading overlay spinner
+
+All code files you need under src/
+
+
+
+---
+
+🚀 Setup (run this first)
+
+1. Create the project and install dependencies:
+
+
+
+npx create-react-app multi-tenant-payments
+cd multi-tenant-payments
+
+# dependencies
+npm install @mui/material @emotion/react @emotion/styled @mui/icons-material axios recharts papaparse framer-motion file-saver
+
+2. Create .env (optional; leave empty to use mock store):
+
+
+
+REACT_APP_API_BASE_URL=http://localhost:8080/api
+
+3. Replace src/ with the files below (copy each file into the matching path). Then:
+
+
+
+npm start
+
+Open http://localhost:3000. Demo credentials: admin/admin, music-user/music, pictures-user/pic.
+
+
+---
+
+Files — Copy each file into src/
+
+
+---
+
+src/index.js
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+createRoot(document.getElementById('root')).render(<App />);
+
+
+---
+
+src/index.css
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root{
+  --sony-blue:#0070D1;
+  --sony-blue-dark:#004C9A;
+  --glass: rgba(255,255,255,0.72);
+  --card-bg: rgba(255,255,255,0.85);
+  --muted:#6b7280;
+  --accent-gradient: linear-gradient(90deg, #0070D1 0%, #00A2E8 100%);
+  --shadow: 0 6px 18px rgba(3,10,25,0.08);
+}
+
+html,body,#root{
+  height:100%;
+  margin:0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: linear-gradient(180deg, #f6fbff 0%, #eef6ff 35%, #ffffff 100%);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.app-shell {
+  display:flex;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width:240px;
+  background: linear-gradient(180deg, rgba(0,112,209,0.06), rgba(0,76,154,0.03));
+  border-right:1px solid rgba(3,10,25,0.04);
+  padding:20px;
+  box-sizing:border-box;
+}
+.brand {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px;
+}
+.logo-circle {
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background: var(--accent-gradient);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-weight:700;
+  box-shadow: 0 6px 18px rgba(3,10,25,0.08);
+}
+.nav-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:8px;
+  color:var(--sony-blue-dark);
+  cursor:pointer;
+  margin-bottom:8px;
+}
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(0,112,209,0.12), rgba(0,162,232,0.06));
+  box-shadow: 0 8px 20px rgba(3,10,25,0.04);
+}
+
+/* Topbar */
+.topbar {
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  background: transparent;
+  border-bottom: 1px solid rgba(3,10,25,0.03);
+  box-sizing:border-box;
+}
+
+/* Content */
+.content {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:auto;
+}
+.container {
+  padding:28px;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius:12px;
+  padding:16px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(3,10,25,0.03);
+}
+.card.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  backdrop-filter: blur(6px);
+}
+
+/* Summary grid */
+.summary-grid {
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:16px;
+  margin-bottom:18px;
+}
+
+/* Small helpers */
+.h4 { font-size:20px; font-weight:600; margin:0 0 8px 0; }
+.muted { color:var(--muted); font-size:13px; }
+.small { font-size:13px; color:#374151; }
+
+/* Buttons */
+.btn {
+  border-radius:8px;
+  padding:8px 12px;
+  border:none;
+  cursor:pointer;
+  background: var(--accent-gradient);
+  color:white;
+  box-shadow: 0 8px 18px rgba(0,112,209,0.12);
+}
+
+/* Tables */
+.table { width:100%; border-collapse:collapse; }
+.table th, .table td { padding:10px 8px; text-align:left; border-bottom:1px solid rgba(3,10,25,0.04); }
+
+/* Splash */
+.splash {
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+  background: linear-gradient(135deg, rgba(0,112,209,0.06), rgba(0,162,232,0.03));
+}
+.splash-card {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+.logo-big {
+  width:110px;
+  height:110px;
+  border-radius:24px;
+  background: linear-gradient(135deg,#0070D1,#00A2E8);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:34px;
+  font-weight:700;
+  box-shadow: 0 20px 50px rgba(0,112,209,0.16);
+}
+
+/* Responsive */
+@media (max-width:900px){
+  .sidebar { display:none; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+
+---
+
+src/theme.js
+
+import { createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: '#0070D1' }, // sony blue
+    secondary: { main: '#00A2E8' },
+    background: { default: '#f4f8ff' },
+  },
+  typography: { fontFamily: 'Inter, Roboto, Arial' },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: { borderRadius: 10, textTransform: 'none' }
+      }
+    }
+  }
+});
+
+export default theme;
+
+
+---
+
+src/services/mockStore.js
+
+export const STORAGE_KEY = 'mtp_demo_v3';
+export const defaultData = {
+  tenants: [
+    { id: 'sony-pictures', name: 'Sony Pictures', currency: 'USD', settlement_days: 2, payment_methods: ['card'] },
+    { id: 'sony-music', name: 'Sony Music', currency: 'EUR', settlement_days: 3, payment_methods: ['card','paypal'] },
+    { id: 'crunchy', name: 'Crunchy', currency: 'JPY', settlement_days: 1, payment_methods: ['card'] },
+  ],
+  users: [
+    { id: 'admin', name: 'Platform Admin', role: 'admin', password: 'admin' },
+    { id: 'music-user', name: 'Music Manager', role: 'tenant_user', tenantId: 'sony-music', password: 'music' },
+    { id: 'pictures-user', name: 'Pictures Manager', role: 'tenant_user', tenantId: 'sony-pictures', password: 'pic' },
+  ],
+  transactions: [
+    { id: 't1', tenantId: 'sony-music', type: 'payment', amount: 19.99, currency: 'EUR', status: 'succeeded', date: '2025-10-01' },
+    { id: 't3', tenantId: 'sony-pictures', type: 'payment', amount: 99.0, currency: 'USD', status: 'pending', date: '2025-10-05' },
+    { id: 't4', tenantId: 'crunchy', type: 'payment', amount: 4500, currency: 'JPY', status: 'settled', date: '2025-09-27' },
+  ],
+  refunds: [
+    { id: 'r1', tenantId: 'sony-music', transactionId: 't1', amount: 19.99, status: 'succeeded', date: '2025-10-02' }
+  ]
+};
+
+export function loadStore() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+  try { return JSON.parse(raw); } catch (e) { localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData)); return JSON.parse(JSON.stringify(defaultData)); }
+}
+export function saveStore(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+
+---
+
+src/services/api.js
+
+import axios from 'axios';
+import { loadStore, saveStore } from './mockStore';
+
+const BASE = process.env.REACT_APP_API_BASE_URL || '';
+const usingBackend = Boolean(BASE);
+const client = axios.create({ baseURL: BASE, headers: { 'Content-Type': 'application/json' }, withCredentials: true });
+
+async function safeRequest(fn) {
+  try { return await fn(); } catch (e) { console.error('API error', e); throw e; }
+}
+
+export const api = {
+  login: (body) => usingBackend ? safeRequest(() => client.post('/login', body).then(r => r.data)) : new Promise((res) => {
+    const store = loadStore();
+    const user = store.users.find(u => u.id === body.username && u.password === body.password);
+    if (!user) return res({ ok: false, reason: 'Invalid credentials' });
+    res({ ok: true, user });
+  }),
+
+  getTenants: () => usingBackend ? safeRequest(() => client.get('/tenants').then(r => r.data)) : Promise.resolve(loadStore().tenants),
+  createTenant: (body) => usingBackend ? safeRequest(() => client.post('/tenants', body).then(r => r.data)) : new Promise((res) => {
+    const store = loadStore(); store.tenants.push(body); saveStore(store); res(body);
+  }),
+
+  getTransactions: (tenantId, { page = 0, pageSize = 10, filters = {} } = {}) => {
+    if (usingBackend) return safeRequest(() => client.get(`/transactions`, { params: { tenantId, page, pageSize, ...filters } }).then(r => r.data));
+    const store = loadStore();
+    let txs = store.transactions.filter(t => t.tenantId === tenantId);
+    if (filters.type) txs = txs.filter(t => t.type === filters.type);
+    if (filters.status) txs = txs.filter(t => t.status === filters.status);
+    if (filters.q) txs = txs.filter(t => t.id.includes(filters.q));
+    const total = txs.length;
+    const paged = txs.slice(page * pageSize, (page+1) * pageSize);
+    return Promise.resolve({ items: paged, total });
+  },
+
+  createTransaction: (body) => usingBackend ? safeRequest(() => client.post('/transactions', body).then(r => r.data)) : new Promise((res) => {
+    const store = loadStore(); const tx = { id: `tx-${Date.now()}`, ...body }; store.transactions.unshift(tx); saveStore(store); res(tx);
+  }),
+
+  getRefunds: (tenantId, { page = 0, pageSize = 10, filters = {} } = {}) => {
+    if (usingBackend) return safeRequest(() => client.get('/refunds', { params: { tenantId, page, pageSize, ...filters } }).then(r => r.data));
+    const store = loadStore(); let refunds = (store.refunds || []).filter(r => r.tenantId === tenantId);
+    if (filters.q) refunds = refunds.filter(r => r.id.includes(filters.q));
+    const total = refunds.length; const items = refunds.slice(page * pageSize, (page+1) * pageSize);
+    return Promise.resolve({ items, total });
+  },
+
+  createRefund: (body) => usingBackend ? safeRequest(() => client.post('/refunds', body).then(r => r.data)) : new Promise((res) => {
+    const store = loadStore(); const refund = { id: `r-${Date.now()}`, ...body, status: 'succeeded', date: new Date().toISOString().slice(0,10) };
+    store.refunds = [refund, ...(store.refunds||[])];
+    store.transactions.unshift({ id: `tx-${Date.now()+1}`, tenantId: body.tenantId, type: 'refund', amount: -Math.abs(body.amount), currency: store.tenants.find(t=>t.id===body.tenantId)?.currency || 'USD', status: 'succeeded', date: refund.date, linkedTo: body.transactionId });
+    saveStore(store); res(refund);
+  }),
+
+  updateTenantSettings: (id, body) => usingBackend ? safeRequest(() => client.put(`/tenants/${id}/settings`, body).then(r=>r.data)) : new Promise((res)=>{
+    const store = loadStore(); store.tenants = store.tenants.map(t=>t.id===id?{...t,...body}:t); saveStore(store); res({ ok: true });
+  }),
+};
+
+
+---
+
+src/context/AuthContext.jsx
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { loadStore, saveStore } from '../services/mockStore';
+
+const AuthContext = createContext();
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [localStore, setLocalStore] = useState(() => loadStore());
+  const [route, setRoute] = useState('splash'); // start with splash
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentTenantId, setCurrentTenantId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => saveStore(localStore), [localStore]);
+
+  const login = async (username, password) => {
+    setLoading(true);
+    try {
+      const res = await api.login({ username, password });
+      setLoading(false);
+      if (!res.ok && !res.user) { return { ok: false, reason: res.reason || 'Login failed' }; }
+      const user = res.user || res;
+      setCurrentUser(user);
+      if (user.role === 'admin') { setRoute('admin'); return { ok: true, user }; }
+      setCurrentTenantId(user.tenantId);
+      setRoute('dashboard');
+      return { ok: true, user };
+    } catch (e) {
+      setLoading(false);
+      return { ok: false, reason: e.message };
+    }
+  };
+
+  const logout = () => { setCurrentUser(null); setCurrentTenantId(null); setRoute('login'); };
+
+  const fetchTenants = async () => {
+    try { const tenants = await api.getTenants(); setLocalStore(prev => ({ ...prev, tenants })); return tenants; } catch (e) { return localStore.tenants; }
+  };
+
+  const addTenant = async (tenant) => { try { const r = await api.createTenant(tenant); setLocalStore(prev => ({ ...prev, tenants: [...prev.tenants, r] })); return r; } catch (e) { setLocalStore(prev => ({ ...prev, tenants: [...prev.tenants, tenant] })); return tenant; } };
+
+  const updateTenant = async (id, patch) => { try { await api.updateTenantSettings(id, patch); setLocalStore(prev => ({ ...prev, tenants: prev.tenants.map(t=>t.id===id?{...t,...patch}:t) })); } catch (e) { setLocalStore(prev => ({ ...prev, tenants: prev.tenants.map(t=>t.id===id?{...t,...patch}:t) })); } };
+
+  const addTransaction = async (tx) => { try { const r = await api.createTransaction(tx); setLocalStore(prev => ({ ...prev, transactions: [r, ...prev.transactions] })); return r; } catch (e) { const local = { id: `tx-${Date.now()}`, ...tx }; setLocalStore(prev => ({ ...prev, transactions: [local, ...prev.transactions] })); return local; } };
+
+  const createRefund = async ({ transactionId, tenantId, amount }) => {
+    try { const r = await api.createRefund({ transactionId, tenantId, amount }); setLocalStore(prev => ({ ...prev, refunds: [r, ...(prev.refunds||[])], transactions: [{ id: `tx-${Date.now()}`, tenantId, type: 'refund', amount: -Math.abs(amount), currency: prev.tenants.find(t=>t.id===tenantId)?.currency || 'USD', status: 'succeeded', date: r.date, linkedTo: transactionId }, ...prev.transactions] })); return r; } catch (e) {
+      const refund = { id: `r-${Date.now()}`, tenantId, transactionId, amount, status: 'succeeded', date: new Date().toISOString().slice(0,10) };
+      setLocalStore(prev => ({ ...prev, refunds: [refund, ...(prev.refunds||[])], transactions: [{ id: `tx-${Date.now()+1}`, tenantId, type: 'refund', amount: -Math.abs(amount), currency: prev.tenants.find(t=>t.id===tenantId)?.currency || 'USD', status: 'succeeded', date: refund.date, linkedTo: transactionId }, ...prev.transactions] }));
+      return refund;
+    }
+  };
+
+  const inviteUser = (payload) => { setLocalStore(prev => ({ ...prev, users: [...prev.users, { ...payload, role: 'tenant_user' }] })); };
+
+  return (
+    <AuthContext.Provider value={{ store: localStore, route, setRoute, currentUser, currentTenantId, setCurrentTenantId, login, logout, fetchTenants, addTenant, updateTenant, addTransaction, createRefund, inviteUser, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+
+---
+
+src/components/LoadingOverlay.jsx
+
+import React from 'react';
+import { Backdrop, CircularProgress } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+
+export default function LoadingOverlay() {
+  const { loading } = useAuth();
+  return (
+    <Backdrop open={Boolean(loading)} sx={{ zIndex: 1300, color: '#0070D1' }}>
+      <CircularProgress color="inherit" />
+    </Backdrop>
+  );
+}
+
+
+---
+
+src/components/Splash.jsx
+
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import './splash.css'; // not required; styles are in index.css
+import { useAuth } from '../context/AuthContext';
+
+export default function Splash({ onFinish }) {
+  const { setRoute } = useAuth();
+  useEffect(() => {
+    const t = setTimeout(() => {
+      onFinish();
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [onFinish]);
+
+  return (
+    <div className="splash">
+      <motion.div initial={{ scale: 0.8, opacity:0 }} animate={{ scale:1, opacity:1 }} transition={{ duration:0.6 }} className="splash-card">
+        <div className="logo-big">MP</div>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:20, fontWeight:700, color:'#003b6b' }}>Multi-Tenant Payment Portal</div>
+          <div style={{ color:'#6b7280', fontSize:13 }}>Secure payments & settlements — demo</div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+
+---
+
+src/components/Topbar.jsx
+
+import React from 'react';
+import { Box, Avatar, IconButton } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import SettingsIcon from '@mui/icons-material/Settings';
+
+export default function Topbar() {
+  const { logout, currentUser, currentTenantId, store } = useAuth();
+  const tenant = store.tenants.find(t=>t.id===currentTenantId);
+
+  return (
+    <div className="topbar">
+      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <div style={{ fontSize:18, fontWeight:700, color:'#062B46' }}>Multi-Tenant Payment Portal</div>
+        {tenant && <div style={{ fontSize:14, color:'#0070D1', marginLeft:8 }}>{tenant.name}</div>}
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <IconButton size="small"><SettingsIcon sx={{ color:'#374151' }} /></IconButton>
+        <Avatar sx={{ bgcolor:'#0070D1', width:36, height:36 }}>{(currentUser?.name||'U').slice(0,1)}</Avatar>
+      </div>
+    </div>
+  );
+}
+
+
+---
+
+src/components/Sidebar.jsx
+
+import React from 'react';
+
+export default function Sidebar({ value, onChange }) {
+  const items = [
+    { key:'dashboard', label:'Dashboard' },
+    { key:'transactions', label:'Transactions' },
+    { key:'refunds', label:'Refunds' },
+    { key:'settings', label:'Settings' },
+  ];
+  return (
+    <div className="sidebar">
+      <div className="brand">
+        <div className="logo-circle">MP</div>
+        <div>
+          <div style={{ fontWeight:700, color:'#062B46' }}>Multi-Tenant</div>
+          <div style={{ fontSize:12, color:'#6b7280' }}>Payment Portal</div>
+        </div>
+      </div>
+      {items.map(it => (
+        <div key={it.key} className={`nav-item ${value===it.key ? 'active':''}`} onClick={()=>onChange(it.key)}>
+          <div style={{ fontWeight:600 }}>{it.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+---
+
+src/components/Dashboard.jsx
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Paper } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+function StatCard({ title, value }) {
+  return (
+    <div className="card glass">
+      <div className="small" style={{ color:'#6b7280' }}>{title}</div>
+      <div style={{ fontSize:20, fontWeight:700, color:'#062B46' }}>{value}</div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { store, currentTenantId } = useAuth();
+  const txs = store.transactions.filter(t=>t.tenantId===currentTenantId && t.type==='payment');
+  const refunds = (store.refunds||[]).filter(r=>r.tenantId===currentTenantId);
+  const total = txs.reduce((s,t)=>s+t.amount,0);
+  const refundTotal = refunds.reduce((s,r)=>s+r.amount,0);
+
+  const [chartData, setChartData] = useState([]);
+  useEffect(()=>{
+    const days = 7; const arr = [];
+    for (let i=days-1;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i); const key = d.toISOString().slice(0,10);
+      const sum = txs.filter(t=>t.date===key).reduce((s,t)=>s+t.amount,0);
+      arr.push({ date: key.slice(5), amount: sum });
+    }
+    setChartData(arr);
+  }, [txs]);
+
+  const pieData = useMemo(()=>[{ name:'Payments', value: txs.length }, { name:'Refunds', value: refunds.length }], [txs.length, refunds.length]);
+  const COLORS = ['#0070D1', '#00A2E8'];
+
+  return (
+    <div>
+      <div style={{ marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <div>
+          <h2 className="h4">Welcome back</h2>
+          <div className="muted">Here’s your latest transaction overview</div>
+        </div>
+      </div>
+
+      <div className="summary-grid">
+        <StatCard title="Total Payments" value={`${total.toFixed(2)}`} />
+        <StatCard title="Refunds" value={`${refundTotal.toFixed(2)}`} />
+        <StatCard title="Transactions" value={txs.length} />
+        <StatCard title="Active Currencies" value={[...new Set(txs.map(t=>t.currency))].join(', ') || '-' } />
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16 }}>
+        <Paper className="card" style={{ padding:12 }}>
+          <div style={{ fontWeight:700, marginBottom:8 }}>Payments Trend (last 7 days)</div>
+          <div style={{ height:220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}><XAxis dataKey="date"/><YAxis/><Tooltip/><Bar dataKey="amount" fill="#0070D1"/></BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Paper>
+
+        <Paper className="card" style={{ padding:12 }}>
+          <div style={{ fontWeight:700, marginBottom:8 }}>Refunds vs Payments</div>
+          <div style={{ height:220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart><Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>{pieData.map((e,i)=><Cell key={i} fill={COLORS[i%COLORS.length]} />)}</Pie></PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Paper>
+      </div>
+    </div>
+  );
+}
+
+
+---
+
+src/components/Transactions.jsx
+
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Button, TextField, MenuItem, Select, FormControl, InputLabel, TablePagination } from '@mui/material';
+import Papa from 'papaparse';
+import { saveAs } from 'file-saver';
+
+export default function Transactions() {
+  const { store, currentTenantId, addTransaction, createRefund } = useAuth();
+  const [filters, setFilters] = useState({ q:'', status:'' });
+  const [page, setPage] = useState(0); const [pageSize, setPageSize] = useState(10);
+  const [items, setItems] = useState([]); const [total, setTotal] = useState(0);
+
+  useEffect(()=>{
+    const all = store.transactions.filter(t=>t.tenantId===currentTenantId && t.type==='payment');
+    let filtered = all;
+    if (filters.q) filtered = filtered.filter(t=>t.id.includes(filters.q));
+    if (filters.status) filtered = filtered.filter(t=>t.status===filters.status);
+    setTotal(filtered.length);
+    setItems(filtered.slice(page*pageSize, (page+1)*pageSize));
+  }, [store, currentTenantId, filters, page, pageSize]);
+
+  const createTest = async ()=> {
+    await addTransaction({ tenantId: currentTenantId, type:'payment', amount: Math.round(Math.random()*10000)/100, currency: store.tenants.find(t=>t.id===currentTenantId)?.currency || 'USD', status:'succeeded', date: new Date().toISOString().slice(0,10) });
+  };
+
+  const handleRefund = async (tx) => { await createRefund({ transactionId: tx.id, tenantId: tx.tenantId, amount: tx.amount }); };
+
+  const exportCSV = () => {
+    const csv = Papa.unparse(items);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, 'transactions.csv');
+  };
+
+  return (
+    <div>
+      <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+        <Button className="btn" onClick={createTest}>Create Test Payment</Button>
+        <Button className="btn" onClick={exportCSV}>Export CSV</Button>
+        <TextField placeholder="Search by id" size="small" value={filters.q} onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} />
+        <FormControl size="small">
+          <InputLabel>Status</InputLabel>
+          <Select value={filters.status} label="Status" onChange={(e)=>setFilters(f=>({...f,status:e.target.value}))} sx={{ minWidth:120 }}>
+            <MenuItem value="">All</MenuItem><MenuItem value="succeeded">Succeeded</MenuItem><MenuItem value="pending">Pending</MenuItem>
+          </Select>
+        </FormControl>
+      </div>
+
+      <table className="table card">
+        <thead><tr><th>ID</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>
+          {items.map(t=>(
+            <tr key={t.id}>
+              <td>{t.id}</td>
+              <td>{t.amount} {t.currency}</td>
+              <td>{t.status}</td>
+              <td>{t.date}</td>
+              <td><button className="btn" disabled={t.status!=='succeeded'} onClick={()=>handleRefund(t)}>Refund</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <TablePagination component="div" count={total} page={page} onPageChange={(e,newP)=>setPage(newP)} rowsPerPage={pageSize} onRowsPerPageChange={(e)=>{ setPageSize(parseInt(e.target.value,10)); setPage(0); }} />
+    </div>
+  );
+}
+
+
+---
+
+src/components/Refunds.jsx
+
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Button, TablePagination } from '@mui/material';
+import Papa from 'papaparse';
+import { saveAs } from 'file-saver';
+
+export default function Refunds() {
+  const { store, currentTenantId } = useAuth();
+  const [page, setPage] = useState(0); const [pageSize, setPageSize] = useState(10);
+  const [items, setItems] = useState([]); const [total, setTotal] = useState(0);
+
+  useEffect(()=>{
+    const all = (store.refunds||[]).filter(r=>r.tenantId===currentTenantId);
+    setTotal(all.length); setItems(all.slice(page*pageSize, (page+1)*pageSize));
+  }, [store, currentTenantId, page, pageSize]);
+
+  const exportCSV = () => { const csv = Papa.unparse(items); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); saveAs(blob, 'refunds.csv'); };
+
+  return (
+    <div>
+      <div style={{ marginBottom:10 }}><Button className="btn" onClick={exportCSV}>Export CSV</Button></div>
+      <table className="table card">
+        <thead><tr><th>ID</th><th>Transaction</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>{items.map(r=>(
+          <tr key={r.id}><td>{r.id}</td><td>{r.transactionId}</td><td>{r.amount}</td><td>{r.status}</td><td>{r.date}</td></tr>
+        ))}</tbody>
+      </table>
+      <TablePagination component="div" count={total} page={page} onPageChange={(e,newP)=>setPage(newP)} rowsPerPage={pageSize} onRowsPerPageChange={(e)=>{ setPageSize(parseInt(e.target.value,10)); setPage(0); }} />
+    </div>
+  );
+}
+
+
+---
+
+src/components/TenantSettings.jsx
+
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Button, FormControl, InputLabel, Select, MenuItem, TextField } from '@mui/material';
+
+export default function TenantSettings({ tenant }) {
+  const { updateTenant } = useAuth();
+  const [currency, setCurrency] = useState(tenant.currency);
+  const [settlement, setSettlement] = useState(tenant.settlement_days);
+  const [methods, setMethods] = useState(tenant.payment_methods || []);
+
+  useEffect(()=>{ setCurrency(tenant.currency); setSettlement(tenant.settlement_days); setMethods(tenant.payment_methods || []); }, [tenant]);
+
+  const save = () => updateTenant(tenant.id, { currency, settlement_days: settlement, payment_methods: methods });
+
+  const toggle = (m) => setMethods(prev => prev.includes(m) ? prev.filter(x=>x!==m) : [...prev, m]);
+
+  return (
+    <div className="card">
+      <div style={{ marginBottom:12, fontWeight:700 }}>Tenant Settings</div>
+      <FormControl fullWidth sx={{ mb:1 }}>
+        <InputLabel>Currency</InputLabel>
+        <Select value={currency} label="Currency" onChange={(e)=>setCurrency(e.target.value)}>
+          <MenuItem value='USD'>USD</MenuItem><MenuItem value='EUR'>EUR</MenuItem><MenuItem value='JPY'>JPY</MenuItem>
+        </Select>
+      </FormControl>
+      <TextField label="Settlement (days)" type="number" value={settlement} onChange={(e)=>setSettlement(Number(e.target.value))} sx={{ mb:2 }} fullWidth />
+      <div style={{ display:'flex', gap:8, marginBottom:12 }}>
+        <button className={`btn`} onClick={()=>toggle('card')} style={{ background: methods.includes('card') ? 'var(--accent-gradient)':'#fff', color: methods.includes('card')?'#fff':'#0070D1' }}>Card</button>
+        <button className={`btn`} onClick={()=>toggle('paypal')} style={{ background: methods.includes('paypal') ? 'var(--accent-gradient)':'#fff', color: methods.includes('paypal')?'#fff':'#0070D1' }}>PayPal</button>
+      </div>
+      <Button variant="contained" onClick={save}>Save</Button>
+    </div>
+  );
+}
+
+
+---
+
+src/components/Login.jsx
+
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Button, TextField } from '@mui/material';
+
+export default function Login() {
+  const { login } = useAuth();
+  const [username, setUsername] = useState(''); const [password, setPassword] = useState(''); const [err, setErr] = useState(null);
+
+  const tryLogin = async () => {
+    const res = await login(username, password);
+    if (!res.ok) setErr(res.reason);
+  };
+
+  return (
+    <div style={{ display:'flex', justifyContent:'center', marginTop:80 }}>
+      <div style={{ width:420 }}>
+        <div className="card glass" style={{ marginBottom:16 }}>
+          <h3 style={{ margin:0 }}>Sign in</h3>
+          <div className="muted" style={{ marginBottom:12 }}>Use demo credentials: admin/admin, music-user/music, pictures-user/pic</div>
+          <TextField label="Username" fullWidth value={username} onChange={(e)=>setUsername(e.target.value)} sx={{ mb:1 }} />
+          <TextField label="Password" fullWidth type="password" value={password} onChange={(e)=>setPassword(e.target.value)} sx={{ mb:1 }} />
+          {err && <div style={{ color:'red', marginBottom:8 }}>{err}</div>}
+          <div style={{ display:'flex', gap:8 }}>
+            <button className="btn" onClick={tryLogin}>Login</button>
+            <button className="btn" onClick={()=>{ setUsername('admin'); setPassword('admin'); }}>Auto Admin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+---
+
+src/App.jsx
+
+import React, { useState, useEffect } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
+import Dashboard from './components/Dashboard';
+import Transactions from './components/Transactions';
+import Refunds from './components/Refunds';
+import TenantSettings from './components/TenantSettings';
+import Login from './components/Login';
+import Splash from './components/Splash';
+import LoadingOverlay from './components/LoadingOverlay';
+import './index.css';
+
+function AppContent() {
+  const { route, setRoute, store } = useAuth();
+  const [nav, setNav] = useState('dashboard');
+
+  // if route is 'splash' show splash component then go to login
+  if (route === 'splash') {
+    return <Splash onFinish={() => setRoute('login')} />;
+  }
+  if (route === 'login') return <Login />;
+
+  return (
+    <div className="app-shell">
+      <Sidebar value={nav} onChange={setNav} />
+      <div className="content">
+        <Topbar />
+        <div className="container">
+          {nav === 'dashboard' && <Dashboard />}
+          {nav === 'transactions' && <Transactions />}
+          {nav === 'refunds' && <Refunds />}
+          {nav === 'settings' && <TenantSettings tenant={store.tenants.find(t=>t.id === (store?.tenants?.[0]?.id))} />}
+        </div>
+      </div>
+      <LoadingOverlay />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+
+---
+
+Notes & Next Steps
+
+I kept the mock fallback so you can immediately interact with the UI without a backend. When ready, set REACT_APP_API_BASE_URL to your Java API base and the app will attempt real calls automatically.
+
+The UI uses plain CSS plus MUI — that keeps the design consistent and easy to tweak. If you want Tailwind later, we can add it.
+
+If you want, I can:
+
+Split the AuthContext routes to support admin-specific pages (admin tenant creation UI).
+
+Wire the admin panel components & tenant invite dialogs (currently the focus was tenant UX & visuals).
+
+Provide a small README and optional Dockerfile.
+
+
+
+
+---
+
+If you want, I’ll now:
+
+(A) Paste the rest of any missing admin components or dialogs (AddTenant/InviteUser) to match earlier admin functionality, or
+
+(B) Create a downloadable zip of the src/ directory ready to drop into your project.
+
+
+Which would you like?
+
