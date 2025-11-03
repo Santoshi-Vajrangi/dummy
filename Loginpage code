@@ -1,0 +1,188 @@
+  import React, { useState } from "react";
+import {
+  Box,
+  TextField,
+  Button,
+  MenuItem,
+  Paper,
+  Typography,
+} from "@mui/material";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+// ✅ Correct image imports
+import bgImage from "../assets/Login.png";
+import sonyLogo from "../assets/sonylogo.jpg"; 
+
+const tenants = ["Sony Pictures", "Sony Music", "Crunchy", "SIE (Admin)"];
+const roles = ["Developer", "Operator", "QA"];
+
+const Login = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    tenant: "",
+    role: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formData.tenant && formData.role) {
+      const tenantPath = formData.tenant.toLowerCase().replace(/\s+/g, "-");
+      const rolePath = formData.role.toLowerCase();
+      navigate(`/${tenantPath}/${rolePath}`);
+    } else {
+      alert("Please select tenant and role.");
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        height: "100vh",
+        background: `linear-gradient(135deg, #e8f0fe 0%, #ffffff 100%), url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 2,
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
+      >
+        <Paper
+          elevation={6}
+          sx={{
+            width: { xs: "95%", sm: "420px" },
+            p: 4,
+            borderRadius: 3,
+            background: "rgba(255, 255, 255, 0.92)",
+            border: "2px solid rgba(255, 140, 0, 0.7)",
+            boxShadow: "0px 8px 25px rgba(11, 58, 102, 0.15)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <motion.img
+              src={sonyLogo}
+              alt="Sony Logo"
+              style={{ height: 50 }}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6 }}
+            />
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              mt={2}
+              sx={{
+                background: "linear-gradient(90deg, #0b3a66, #1976d2)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Sony Payments Portal
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Sign in to continue your journey
+            </Typography>
+          </Box>
+
+          <form onSubmit={handleSubmit}>
+            <TextField
+              label="Email"
+              name="email"
+              type="email"
+              fullWidth
+              margin="normal"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              sx={{ input: { color: "#0b3a66" } }}
+            />
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              fullWidth
+              margin="normal"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              sx={{ input: { color: "#0b3a66" } }}
+            />
+            <TextField
+              label="Tenant"
+              name="tenant"
+              select
+              fullWidth
+              margin="normal"
+              value={formData.tenant}
+              onChange={handleChange}
+              required
+            >
+              {tenants.map((tenant) => (
+                <MenuItem key={tenant} value={tenant}>
+                  {tenant}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Role"
+              name="role"
+              select
+              fullWidth
+              margin="normal"
+              value={formData.role}
+              onChange={handleChange}
+              required
+            >
+              {roles.map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{
+                  mt: 3,
+                  py: 1.3,
+                  fontWeight: "bold",
+                  background:
+                    "linear-gradient(90deg, #1976d2, #0b3a66 70%, #ff8c00 100%)",
+                  boxShadow: "0px 4px 15px rgba(255, 140, 0, 0.3)",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(90deg, #0b3a66, #1976d2 70%, #ff8c00 100%)",
+                  },
+                }}
+              >
+                Sign In
+              </Button>
+            </motion.div>
+          </form>
+        </Paper>
+      </motion.div>
+    </Box>
+  );
+};
+
+export default Login;
